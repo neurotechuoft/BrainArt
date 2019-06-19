@@ -11,3 +11,8 @@
   margin: 0;
   padding: 10px;
 }
+
+h1 {
+  position: relative;
+  z-index: 3;
+}

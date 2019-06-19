@@ -72,11 +72,14 @@ export class NightskyComponent implements OnInit {
   frequency_bands = new Array<string>();
 
   /** variables for when the user wants to see which frenquency band power is the current highest */
-  // highest_ind = 0;
+  highest_ind = 0;
   highest_colors = new Array<number>();
   prev_colors = new Array<number>();
 
+  most_frequent = 0;
+
   bad_data = 0;
+  started_flag = 0;
 
   constructor(private papa: Papa, private http: HttpClient) {
   }
@@ -97,7 +100,7 @@ export class NightskyComponent implements OnInit {
 
     // initializing the variables to be used for EEG
     this.sbp_color = ['#4193c6', '#cc4fb1', '#46bc3e', '#833fc1', '#e28009'];
-    this.node_class = ['muse_AF7', 'muse_AF8', 'muse_TP9', 'muse_TP10'];
+    this.node_class = ['muse_TP9', 'muse_AF7', 'muse_AF8', 'muse_TP10'];
     this.sbp_channels = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]];
     this.frequency_bands = ['alpha', 'beta', 'theta', 'delta', 'gamma'];
     this.opacities = [0.5, 0.5, 0.5, 0.5];
@@ -192,65 +195,65 @@ export class NightskyComponent implements OnInit {
    * TODO: set the cur_frequency and cur_freq_color to the correct index value
    *       set the highest_ind to 0 since a specific frequency is selected
    */
-  // setAlpha() {
-  //   this.cur_frequency = 0;
-  //   this.cur_freq_color = 0;
-  //   this.highest_ind = 0;
-  //
-  //   console.log('current wave: ' + this.cur_frequency);
-  // }
+  setAlpha() {
+    this.cur_frequency = 0;
+    this.cur_freq_color = 0;
+    this.highest_ind = 0;
+
+    console.log('current wave: ' + this.cur_frequency);
+  }
 
   /**
    * when user clicks on the button Alpha, sets the current frequency selected as 'beta'
    */
-  // setBeta() {
-  //   this.cur_frequency = 1;
-  //   this.cur_freq_color = 1;
-  //   this.highest_ind = 0;
-  //
-  //   console.log('current wave: ' + this.cur_frequency);
-  // }
+  setBeta() {
+    this.cur_frequency = 1;
+    this.cur_freq_color = 1;
+    this.highest_ind = 0;
+
+    console.log('current wave: ' + this.cur_frequency);
+  }
 
   /**
    * when user clicks on the button Beta, sets the current frequency selected as 'theta'
    */
-  // setTheta() {
-  //   this.cur_frequency = 2;
-  //   this.cur_freq_color = 2;
-  //   this.highest_ind = 0;
-  //
-  //   console.log('current wave: ' + this.cur_frequency);
-  // }
+  setTheta() {
+    this.cur_frequency = 2;
+    this.cur_freq_color = 2;
+    this.highest_ind = 0;
+
+    console.log('current wave: ' + this.cur_frequency);
+  }
 
   /**
    * when user clicks on the button Theta, sets the current frequency selected as 'delta'
    */
-  // setDelta() {
-  //   this.cur_frequency = 3;
-  //   this.cur_freq_color = 3;
-  //   this.highest_ind = 0;
-  //
-  //   console.log('current wave: ' + this.cur_frequency);
-  // }
+  setDelta() {
+    this.cur_frequency = 3;
+    this.cur_freq_color = 3;
+    this.highest_ind = 0;
+
+    console.log('current wave: ' + this.cur_frequency);
+  }
 
   /**
    * when user clicks on the button Delta, sets the current frequency selected as 'gamma'
    */
-  // setGamma() {
-  //   this.cur_frequency = 4;
-  //   this.cur_freq_color = 4;
-  //   this.highest_ind = 0;
-  //
-  //   console.log('current wave: ' + this.cur_frequency);
-  // }
+  setGamma() {
+    this.cur_frequency = 4;
+    this.cur_freq_color = 4;
+    this.highest_ind = 0;
+
+    console.log('current wave: ' + this.cur_frequency);
+  }
 
   /**
    * when user clicks on the button Highest, sets the highest_ind to 1 to indicate that we want to display the
    * frequency with the highest value
    */
-  // setHighest() {
-  //   this.highest_ind = 1;
-  // }
+  setHighest() {
+    this.highest_ind = 1;
+  }
 
   /**
    * reads input signals from a csv file and calculates the signal band powers for each channel
@@ -258,6 +261,7 @@ export class NightskyComponent implements OnInit {
   offLine() {
 
     const avg = [0, 0, 0, 0];
+    const variance = [0, 0, 0, 0];
 
     this.http.get('./assets/stare_blink.csv', {responseType: 'text'})
       .subscribe(data => this.papa.parse(data, {
@@ -292,15 +296,20 @@ export class NightskyComponent implements OnInit {
                 avg[2] = this.ch_TP9.reduce((a, b) => a + b, 0) / 256;
                 avg[3] = this.ch_TP10.reduce((a, b) => a + b, 0) / 256;
 
+                variance[0] = this.ch_AF7.reduce((a, b) => a + Math.pow((b - avg[0]), 2), 0) / 256;
+                variance[1] = this.ch_AF8.reduce((a, b) => a + Math.pow((b - avg[1]), 2), 0) / 256;
+                variance[2] = this.ch_TP9.reduce((a, b) => a + Math.pow((b - avg[2]), 2), 0) / 256;
+                variance[3] = this.ch_TP10.reduce((a, b) => a + Math.pow((b - avg[3]), 2), 0) / 256;
+
                 for (let j = 0; j < 5; j++) {
 
-                  this.sbp_channels[0][j] = bcijs.signalBandPower(this.ch_AF7.map(x => x - avg[0]), 256, this.frequency_bands[j]);
-                  this.sbp_channels[1][j] = bcijs.signalBandPower(this.ch_AF8.map(x => x - avg[1]), 256, this.frequency_bands[j]);
-                  this.sbp_channels[2][j] = bcijs.signalBandPower(this.ch_TP9.map(x => x - avg[2]), 256, this.frequency_bands[j]);
-                  this.sbp_channels[3][j] = bcijs.signalBandPower(this.ch_TP10.map(x => x - avg[3]), 256, this.frequency_bands[j]);
+                  this.sbp_channels[0][j] = bcijs.signalBandPower(this.ch_AF7.map(x => (x - avg[0]) / variance[0]), 256, this.frequency_bands[j]);
+                  this.sbp_channels[1][j] = bcijs.signalBandPower(this.ch_AF8.map(x => (x - avg[1]) / variance[1]), 256, this.frequency_bands[j]);
+                  this.sbp_channels[2][j] = bcijs.signalBandPower(this.ch_TP9.map(x => (x - avg[2]) / variance[2]), 256, this.frequency_bands[j]);
+                  this.sbp_channels[3][j] = bcijs.signalBandPower(this.ch_TP10.map(x => (x - avg[3]) / variance[3]), 256, this.frequency_bands[j]);
                 }
 
-                console.log(this.sbp_channels[0]);
+                // console.log(this.sbp_channels[0]);
 
                 // if (this.highest_ind === 0) {
                 //
@@ -324,13 +333,13 @@ export class NightskyComponent implements OnInit {
   /**
    * helper function to update the svg to reflect the change when user selects a particular frequency
    */
-  // update_svg_selected(idx: number) {
-  //
-  //   d3.selectAll('.' + this.node_class[idx])
-  //     .style('fill', this.sbp_color[this.cur_freq_color])
-  //     .attr('fill-opacity', this.opacities[idx])
-  //     .merge(this.nodes[idx]);
-  // }
+  update_svg_selected(idx: number) {
+
+    d3.selectAll('.' + this.node_class[idx])
+      .style('fill', this.sbp_color[this.cur_freq_color])
+      .attr('fill-opacity', this.opacities[idx])
+      .merge(this.nodes[idx]);
+  }
 
   /**
    * helper function to update the svg to reflect the change when user wants to display the frequency with highest abp
@@ -353,17 +362,43 @@ export class NightskyComponent implements OnInit {
    */
   update_highest() {
 
-    for (let i = 0; i < 4; i++) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
 
-      this.highest_colors[i] = this.sbp_color[this.sbp_channels[i].indexOf(Math.max.apply(Math, this.sbp_channels[i]))];
+        const occurrence = [0, 0, 0, 0, 0];
+        let highest_idx = 0;
+        let bad_input = 0;
 
-      if (this.highest_colors[i] !== this.prev_colors[i]) {
+        for (let i = 0; i < 4; i++) {
 
-        this.update_svg_highest(i);
+          if (isNaN(this.sbp_channels[i][0])) {
+            bad_input = 1;
+          }
+        }
 
-        this.prev_colors[i] = this.highest_colors[i];
-      }
-    }
+        if (bad_input === 0) {
+
+          for (let i = 0; i < 4; i++) {
+
+            highest_idx = this.sbp_channels[i].indexOf(Math.max.apply(null, this.sbp_channels[i]));
+            occurrence[highest_idx] += 1;
+
+            this.highest_colors[i] = this.sbp_color[highest_idx];
+
+            if (this.highest_colors[i] !== this.prev_colors[i]) {
+
+              this.update_svg_highest(i);
+
+              this.prev_colors[i] = this.highest_colors[i];
+            }
+          }
+
+          this.most_frequent = occurrence.indexOf(Math.max.apply(Math, occurrence));
+
+        }
+
+      }, 0);
+    });
   }
 
   /**
@@ -373,41 +408,41 @@ export class NightskyComponent implements OnInit {
    *           then decrease opacity to reflect changes in abp
    *       update the svg to reflect the changes
    */
-  // update_selected() {
-  //
-  //   if (this.started_flag === 0) {
-  //
-  //     console.log('first detected');
-  //
-  //     this.prev_sbps = JSON.parse(JSON.stringify(this.sbp_channels));
-  //     this.started_flag = 1;
-  //
-  //   } else {
-  //
-  //     console.log('cur_abp: ' + this.sbp_channels[0]);
-  //
-  //     for (let i = 0; i < 4; i++) {
-  //       if (this.sbp_channels[i][this.cur_frequency] > this.prev_sbps[i][this.cur_frequency]) {
-  //         this.opacities[i] += 0.02;
-  //
-  //         if (this.opacities[i] > 1) {
-  //           this.opacities[i] = 1;
-  //         }
-  //
-  //       } else if (this.sbp_channels[i][this.cur_frequency] < this.prev_sbps[i][this.cur_frequency]) {
-  //         this.opacities[i] -= 0.02;
-  //
-  //         if (this.opacities[i] < 0) {
-  //           this.opacities[i] = 0;
-  //         }
-  //       }
-  //
-  //       this.update_svg_selected(i);
-  //
-  //     }
-  //     this.prev_sbps = JSON.parse(JSON.stringify(this.sbp_channels));
-  //   }
-  // }
+  update_selected() {
+
+    if (this.started_flag === 0) {
+
+      console.log('first detected');
+
+      this.prev_sbps = JSON.parse(JSON.stringify(this.sbp_channels));
+      this.started_flag = 1;
+
+    } else {
+
+      console.log('cur_abp: ' + this.sbp_channels[0]);
+
+      for (let i = 0; i < 4; i++) {
+        if (this.sbp_channels[i][this.cur_frequency] > this.prev_sbps[i][this.cur_frequency]) {
+          this.opacities[i] += 0.02;
+
+          if (this.opacities[i] > 1) {
+            this.opacities[i] = 1;
+          }
+
+        } else if (this.sbp_channels[i][this.cur_frequency] < this.prev_sbps[i][this.cur_frequency]) {
+          this.opacities[i] -= 0.02;
+
+          if (this.opacities[i] < 0) {
+            this.opacities[i] = 0;
+          }
+        }
+
+        this.update_svg_selected(i);
+
+      }
+      this.prev_sbps = JSON.parse(JSON.stringify(this.sbp_channels));
+    }
+  }
 
   /**
    * connectes to the Muse API through bluetooth
@@ -421,13 +456,15 @@ export class NightskyComponent implements OnInit {
     this.stream();
   }
 
+
   /**
    * subscribe to the Muse data
    */
   stream() {
 
     let nxt_idx = 0;
-    const avg = [0, 0, 0, 0];
+    const ch_mean = [0, 0, 0, 0];
+    const ch_var = [0, 0, 0, 0];
 
     this.data.subscribe((sample) => {
 
@@ -446,9 +483,9 @@ export class NightskyComponent implements OnInit {
       if (this.bad_data === 0) {
 
         // split into 4 channels
-        this.ch_AF7.push(Number(this.cur_data[0]));
-        this.ch_AF8.push(Number(this.cur_data[1]));
-        this.ch_TP9.push(Number(this.cur_data[2]));
+        this.ch_TP9.push(Number(this.cur_data[0]));
+        this.ch_AF7.push(Number(this.cur_data[1]));
+        this.ch_AF8.push(Number(this.cur_data[2]));
         this.ch_TP10.push(Number(this.cur_data[3]));
 
         nxt_idx += 1;
@@ -461,20 +498,27 @@ export class NightskyComponent implements OnInit {
           this.ch_TP9.shift();
           this.ch_TP10.shift();
 
-          avg[0] = this.ch_AF7.reduce((a, b) => a + b, 0) / 256;
-          avg[1] = this.ch_AF8.reduce((a, b) => a + b, 0) / 256;
-          avg[2] = this.ch_TP9.reduce((a, b) => a + b, 0) / 256;
-          avg[3] = this.ch_TP10.reduce((a, b) => a + b, 0) / 256;
+
+          // zero mean every data point
+          ch_mean[0] = this.ch_TP9.reduce((a, b) => a + b, 0) / 256;
+          ch_mean[1] = this.ch_AF7.reduce((a, b) => a + b, 0) / 256;
+          ch_mean[2] = this.ch_AF8.reduce((a, b) => a + b, 0) / 256;
+          ch_mean[3] = this.ch_TP10.reduce((a, b) => a + b, 0) / 256;
+
+          ch_var[0] = this.ch_TP9.reduce((a, b) => a + Math.pow((b - ch_mean[0]), 2), 0) / 256;
+          ch_var[1] = this.ch_AF7.reduce((a, b) => a + Math.pow((b - ch_mean[1]), 2), 0) / 256;
+          ch_var[2] = this.ch_AF8.reduce((a, b) => a + Math.pow((b - ch_mean[2]), 2), 0) / 256;
+          ch_var[3] = this.ch_TP10.reduce((a, b) => a + Math.pow((b - ch_mean[3]), 2), 0) / 256;
 
           for (let j = 0; j < 5; j++) {
 
-            this.sbp_channels[0][j] = bcijs.signalBandPower(this.ch_AF7.map(x => x - avg[0]), 256, this.frequency_bands[j]);
-            this.sbp_channels[1][j] = bcijs.signalBandPower(this.ch_AF8.map(x => x - avg[1]), 256, this.frequency_bands[j]);
-            this.sbp_channels[2][j] = bcijs.signalBandPower(this.ch_TP9.map(x => x - avg[2]), 256, this.frequency_bands[j]);
-            this.sbp_channels[3][j] = bcijs.signalBandPower(this.ch_TP10.map(x => x - avg[3]), 256, this.frequency_bands[j]);
+            this.sbp_channels[0][j] = bcijs.signalBandPower(this.ch_TP9.map(x => (x - ch_mean[0]) / ch_var[0]), 256, this.frequency_bands[j]);
+            this.sbp_channels[1][j] = bcijs.signalBandPower(this.ch_AF7.map(x => (x - ch_mean[1]) / ch_var[1]), 256, this.frequency_bands[j]);
+            this.sbp_channels[2][j] = bcijs.signalBandPower(this.ch_AF8.map(x => (x - ch_mean[2]) / ch_var[2]), 256, this.frequency_bands[j]);
+            this.sbp_channels[3][j] = bcijs.signalBandPower(this.ch_TP10.map(x => (x - ch_mean[3]) / ch_var[3]), 256, this.frequency_bands[j]);
           }
 
-          console.log(this.sbp_channels[0]);
+          // console.log(this.sbp_channels[0]);
 
           // if (this.highest_ind === 0) {
           //
@@ -485,7 +529,7 @@ export class NightskyComponent implements OnInit {
           //   this.update_highest();
           // }
 
-          this.update_highest();
+          this.update_highest().then(() => console.log('success'));
 
         }
       }

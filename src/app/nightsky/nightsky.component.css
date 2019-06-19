@@ -74,4 +74,28 @@ svg {
   height: 100%;
   width: 100%;
   vertical-align: middle;
+  position: relative;
+}
+
+.model {
+  z-index: 2;
+  position: relative;
+}
+
+.moon {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  display: block;
+  z-index: 0;
+  opacity: 0;
+}
+
+.stars {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  display: block;
+  z-index: 1;
+  opacity: 0;
 }
