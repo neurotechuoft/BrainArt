@@ -291,10 +291,10 @@ export class NightskyComponent implements OnInit {
                 this.ch_TP9.shift();
                 this.ch_TP10.shift();
 
-                avg[0] = this.ch_AF7.reduce((a, b) => a + b, 0) / 256;
-                avg[1] = this.ch_AF8.reduce((a, b) => a + b, 0) / 256;
-                avg[2] = this.ch_TP9.reduce((a, b) => a + b, 0) / 256;
-                avg[3] = this.ch_TP10.reduce((a, b) => a + b, 0) / 256;
+                avg[0] = this.ch_AF7.reduce((a, b) => a + b, 0) / this.ch_AF7.length;
+                avg[1] = this.ch_AF8.reduce((a, b) => a + b, 0) / this.ch_AF8.length;
+                avg[2] = this.ch_TP9.reduce((a, b) => a + b, 0) / this.ch_TP9.length;
+                avg[3] = this.ch_TP10.reduce((a, b) => a + b, 0) / this.ch_TP10.length;
 
                 variance[0] = this.ch_AF7.reduce((a, b) => a + Math.pow((b - avg[0]), 2), 0) / 256;
                 variance[1] = this.ch_AF8.reduce((a, b) => a + Math.pow((b - avg[1]), 2), 0) / 256;
@@ -303,10 +303,10 @@ export class NightskyComponent implements OnInit {
 
                 for (let j = 0; j < 5; j++) {
 
-                  this.sbp_channels[0][j] = bcijs.signalBandPower(this.ch_AF7.map(x => (x - avg[0]) / variance[0]), 256, this.frequency_bands[j]);
-                  this.sbp_channels[1][j] = bcijs.signalBandPower(this.ch_AF8.map(x => (x - avg[1]) / variance[1]), 256, this.frequency_bands[j]);
-                  this.sbp_channels[2][j] = bcijs.signalBandPower(this.ch_TP9.map(x => (x - avg[2]) / variance[2]), 256, this.frequency_bands[j]);
-                  this.sbp_channels[3][j] = bcijs.signalBandPower(this.ch_TP10.map(x => (x - avg[3]) / variance[3]), 256, this.frequency_bands[j]);
+                  this.sbp_channels[0][j] = bcijs.signalBandPower(this.ch_AF7.map(x => (x - avg[0])), 256, this.frequency_bands[j]);
+                  this.sbp_channels[1][j] = bcijs.signalBandPower(this.ch_AF8.map(x => (x - avg[1])), 256, this.frequency_bands[j]);
+                  this.sbp_channels[2][j] = bcijs.signalBandPower(this.ch_TP9.map(x => (x - avg[2])), 256, this.frequency_bands[j]);
+                  this.sbp_channels[3][j] = bcijs.signalBandPower(this.ch_TP10.map(x => (x - avg[3])), 256, this.frequency_bands[j]);
                 }
 
                 // console.log(this.sbp_channels[0]);
@@ -381,6 +381,14 @@ export class NightskyComponent implements OnInit {
           for (let i = 0; i < 4; i++) {
 
             highest_idx = this.sbp_channels[i].indexOf(Math.max.apply(null, this.sbp_channels[i]));
+            
+            // There seems to be delta presumably from DC noise or other artifacts so we're just ignoring it
+            // TODO: INVESTIGATE!!
+            if (this.frequency_bands[highest_idx] == 'delta') {
+              this.sbp_channels[i][highest_idx] = 0.0
+              highest_idx = this.sbp_channels[i].indexOf(Math.max.apply(null, this.sbp_channels[i]));
+            }
+
             occurrence[highest_idx] += 1;
 
             this.highest_colors[i] = this.sbp_color[highest_idx];
@@ -500,10 +508,10 @@ export class NightskyComponent implements OnInit {
 
 
           // zero mean every data point
-          ch_mean[0] = this.ch_TP9.reduce((a, b) => a + b, 0) / 256;
-          ch_mean[1] = this.ch_AF7.reduce((a, b) => a + b, 0) / 256;
-          ch_mean[2] = this.ch_AF8.reduce((a, b) => a + b, 0) / 256;
-          ch_mean[3] = this.ch_TP10.reduce((a, b) => a + b, 0) / 256;
+          ch_mean[0] = this.ch_TP9.reduce((a, b) => a + b, 0) / this.ch_TP9.length;
+          ch_mean[1] = this.ch_AF7.reduce((a, b) => a + b, 0) / this.ch_AF7.length;
+          ch_mean[2] = this.ch_AF8.reduce((a, b) => a + b, 0) / this.ch_AF8.length;
+          ch_mean[3] = this.ch_TP10.reduce((a, b) => a + b, 0) / this.ch_TP10.length;
 
           ch_var[0] = this.ch_TP9.reduce((a, b) => a + Math.pow((b - ch_mean[0]), 2), 0) / 256;
           ch_var[1] = this.ch_AF7.reduce((a, b) => a + Math.pow((b - ch_mean[1]), 2), 0) / 256;
@@ -512,11 +520,16 @@ export class NightskyComponent implements OnInit {
 
           for (let j = 0; j < 5; j++) {
 
-            this.sbp_channels[0][j] = bcijs.signalBandPower(this.ch_TP9.map(x => (x - ch_mean[0]) / ch_var[0]), 256, this.frequency_bands[j]);
-            this.sbp_channels[1][j] = bcijs.signalBandPower(this.ch_AF7.map(x => (x - ch_mean[1]) / ch_var[1]), 256, this.frequency_bands[j]);
-            this.sbp_channels[2][j] = bcijs.signalBandPower(this.ch_AF8.map(x => (x - ch_mean[2]) / ch_var[2]), 256, this.frequency_bands[j]);
-            this.sbp_channels[3][j] = bcijs.signalBandPower(this.ch_TP10.map(x => (x - ch_mean[3]) / ch_var[3]), 256, this.frequency_bands[j]);
+            this.sbp_channels[0][j] = bcijs.signalBandPower(this.ch_TP9.map(x => (x - ch_mean[0])), 256, this.frequency_bands[j]);
+            this.sbp_channels[1][j] = bcijs.signalBandPower(this.ch_AF7.map(x => (x - ch_mean[1])), 256, this.frequency_bands[j]);
+            this.sbp_channels[2][j] = bcijs.signalBandPower(this.ch_AF8.map(x => (x - ch_mean[2])), 256, this.frequency_bands[j]);
+            this.sbp_channels[3][j] = bcijs.signalBandPower(this.ch_TP10.map(x => (x - ch_mean[3])), 256, this.frequency_bands[j]);
           }
+
+          // console.log(this.sbp_channels[0])
+          // console.log(this.sbp_channels[1])
+          // console.log(this.sbp_channels[2])
+          // console.log(this.sbp_channels[3])
 
           // console.log(this.sbp_channels[0]);
 
