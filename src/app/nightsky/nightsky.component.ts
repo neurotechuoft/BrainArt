@@ -388,6 +388,10 @@ export class NightskyComponent implements OnInit {
               this.sbp_channels[i][highest_idx] = 0.0
               highest_idx = this.sbp_channels[i].indexOf(Math.max.apply(null, this.sbp_channels[i]));
             }
+            if (this.frequency_bands[highest_idx] == 'theta') {
+              this.sbp_channels[i][highest_idx] = 0.0
+              highest_idx = this.sbp_channels[i].indexOf(Math.max.apply(null, this.sbp_channels[i]));
+            }
 
             occurrence[highest_idx] += 1;
 
